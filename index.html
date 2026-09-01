@@ -165,7 +165,7 @@
   .url-box input{flex:1;}
   .btn-fetch{background:var(--surface-hi);border:1px solid var(--line);color:var(--teal);border-radius:8px;padding:0 12px;font-weight:700;font-size:12px;cursor:pointer;}
   .btn-fetch:active{background:var(--line);}
-  .fetch-status{font-size:11px;margin-top:4px;min-height:14px;}
+  .fetch-status{font-size:11px;margin-top:4px;min-height:14px;line-height:1.4;}
   .fetch-status.err{color:var(--red);}
   .fetch-status.ok{color:var(--green);}
 
@@ -259,8 +259,8 @@
   </div>
 
   <div class="field">
-    <label>ギア分類 / アイテム名</label>
-    <input id="fName" type="text" list="fNameList" placeholder="例: シェルター, クッカー">
+    <label>道具名（分類・プルダウン候補あり）</label>
+    <input id="fName" type="text" list="fNameList" placeholder="例: シェルター, クッカー, ペグ" autocomplete="off">
     <datalist id="fNameList"></datalist>
   </div>
 
@@ -309,6 +309,57 @@ const CATEGORIES = [
 ];
 const CONSUMABLE_CAT = '食料&燃料';
 const CAT_COLORS = ['#3A86FF','#8338EC','#FF006E','#FB5607','#FFBE0B','#2EC4B6','#10B981','#4ADE80','#E76F51','#A0AAB2'];
+
+// 分類・道具名推論辞書 (標準候補リストとしても兼用)
+const GEAR_INFERENCE_RULES = [
+  { keywords: ['バックパック', 'ザック', 'backpack', 'pack', 'fastpack'], cat: 'バックパック', name: 'バックパック', worn: false },
+  { keywords: ['サコッシュ', 'ポーチ', 'chest pack', 'sacoche'], cat: 'バックパック', name: 'サブバッグ', worn: false },
+  { keywords: ['スタッフサック', 'ドライサック', 'stuff sack', 'dry bag', 'dcf sack'], cat: 'バックパック', name: 'スタッフサック', worn: false },
+  { keywords: ['ビビィ', 'bivy'], cat: 'シェルター&設営', name: 'ビビィサック', worn: false },
+  { keywords: ['タープ', 'tarp', 'シェルター', 'shelter', 'ultamid'], cat: 'シェルター&設営', name: 'シェルター', worn: false },
+  { keywords: ['テント', 'tent'], cat: 'シェルター&設営', name: 'テント', worn: false },
+  { keywords: ['ペグ', 'stake', 'peg'], cat: 'シェルター&設営', name: 'ペグ', worn: false },
+  { keywords: ['ガイライン', 'guyline', 'コード', '自在'], cat: 'シェルター&設営', name: 'ガイライン', worn: false },
+  { keywords: ['グランドシート', 'フットプリント', 'footprint'], cat: 'シェルター&設営', name: 'グランドシート', worn: false },
+  { keywords: ['キルト', 'quilt'], cat: 'スリーピング', name: 'キルト', worn: false },
+  { keywords: ['シュラフ', '寝袋', 'sleeping bag'], cat: 'スリーピング', name: 'シュラフ', worn: false },
+  { keywords: ['ライナー', 'core liner', 'インナーシーツ'], cat: 'スリーピング', name: 'インナーシーツ', worn: false },
+  { keywords: ['マット', 'pad', 'tensor', 'switchback', 'duomat'], cat: 'スリーピング', name: 'スリーピングマット', worn: false },
+  { keywords: ['ピロー', '枕', 'pillow'], cat: 'スリーピング', name: 'ピロー', worn: false },
+  { keywords: ['ストーブ', 'バーナー', 'stove', 'burner'], cat: 'クッキング', name: 'ストーブ', worn: false },
+  { keywords: ['クッカー', 'ポット', 'pot', 'マグ', 'mug', 'bot', 'pan', 'パン'], cat: 'クッキング', name: 'クッカー', worn: false },
+  { keywords: ['五徳', 'trivet', 'ゴトク'], cat: 'クッキング', name: '五徳', worn: false },
+  { keywords: ['風防', 'windscreen', 'windshield'], cat: 'クッキング', name: '風防', worn: false },
+  { keywords: ['ポットリフター', 'ハンドル', 'potlifter', 'handle'], cat: 'クッキング', name: 'ポットリフター', worn: false },
+  { keywords: ['スプーン', 'フォーク', 'カトラリー', 'spoon', 'fork', 'scoop', 'cutlery'], cat: 'クッキング', name: 'カトラリー', worn: false },
+  { keywords: ['ライター', 'lighter', '火打石'], cat: 'クッキング', name: 'ライター', worn: false },
+  { keywords: ['コジー', '保温', 'cozy', 'pouch'], cat: 'クッキング', name: 'コジー/保温バッグ', worn: false },
+  { keywords: ['ポール', 'pole', 'トレッキングポール'], cat: 'ウェア', name: 'トレッキングポール', worn: true },
+  { keywords: ['レインコート', 'レインジャケット', 'rain jacket', 'd.d jacket'], cat: 'ウェア', name: 'レインウェア', worn: false },
+  { keywords: ['レインパンツ', 'rain pants', 'd.d pants'], cat: 'ウェア', name: 'レインパンツ', worn: false },
+  { keywords: ['レインスカート', 'キルトスカート', 'rain skirt', 'rain kilt'], cat: 'ウェア', name: 'レインスカート', worn: false },
+  { keywords: ['ウィンドシェル', 'windshell', 'gram jacket'], cat: 'ウェア', name: 'ウィンドシェル', worn: false },
+  { keywords: ['フーディ', 'hoodie', 'タイツ', 'tights', 'コア'], cat: 'ウェア', name: 'インサレーション/就寝着', worn: false },
+  { keywords: ['ソックス', '靴下', 'socks'], cat: 'ウェア', name: 'ソックス', worn: false },
+  { keywords: ['ヘッドライト', 'ライト', 'headlamp', 'nu25'], cat: 'エレクトロニクス', name: 'ヘッドライト', worn: false },
+  { keywords: ['モバイルバッテリー', 'バッテリー', 'battery', 'powerbank'], cat: 'エレクトロニクス', name: 'モバイルバッテリー', worn: false },
+  { keywords: ['ケーブル', 'cable', 'usb'], cat: 'エレクトロニクス', name: 'ケーブル', worn: false },
+  { keywords: ['トイレキット', 'toilet', 'トイレ'], cat: 'ケア&サニタリー', name: 'トイレキット', worn: false },
+  { keywords: ['ティッシュ', 'ワイプ', 'wipe'], cat: 'ケア&サニタリー', name: 'ティッシュ', worn: false },
+  { keywords: ['ハブラシ', '歯ブラシ', 'デンタルケア'], cat: 'ケア&サニタリー', name: 'デンタルケア', worn: false },
+  { keywords: ['シャンプー', 'ヘアケア'], cat: 'ケア&サニタリー', name: 'ヘアケア', worn: false },
+  { keywords: ['スプレー', '虫除け', 'ハッカ'], cat: 'ケア&サニタリー', name: '虫除け/ボディスプレー', worn: false },
+  { keywords: ['ファーストエイド', '救急', 'first aid'], cat: 'エマージェンシー', name: 'ファーストエイド', worn: false },
+  { keywords: ['メディカル', '薬', '絆創膏'], cat: 'エマージェンシー', name: 'メディカルキット', worn: false },
+  { keywords: ['エマージェンシーシート', 'レスキューシート'], cat: 'エマージェンシー', name: 'エマージェンシーシート', worn: false },
+  { keywords: ['ナイフ', 'knife', 'ツール', 'はさみ'], cat: 'エマージェンシー', name: 'ナイフ/ツール', worn: false },
+  { keywords: ['耳栓', 'earplug'], cat: 'エマージェンシー', name: '耳栓', worn: false },
+  { keywords: ['ガス缶', 'isopro'], cat: '食料&燃料', name: 'ガス缶', worn: false },
+  { keywords: ['固形燃料', 'アルコール', '燃料', 'fuel', 'firedragon'], cat: '食料&燃料', name: '燃料', worn: false },
+  { keywords: ['水', 'ウォーター', 'ボトル', 'bottle', 'ペットボトル'], cat: '食料&燃料', name: '水/ボトル', worn: false },
+  { keywords: ['食料', '行動食', 'フリーズドライ'], cat: '食料&燃料', name: '食料', worn: false },
+  { keywords: ['テーブル', 'table'], cat: 'その他', name: 'テーブル', worn: false }
+];
 
 const SEED = [
   /* バックパック */
@@ -384,7 +435,7 @@ const SEED = [
   /* ケア&サニタリー */
   {"id":"seed-30","category":"ケア&サニタリー","name":"トイレキット","product":"モンベル O.D.トイレキット","weight":38,"qty":1,"url":"","packed":false,"worn":false},
   {"id":"seed-31","category":"ケア&サニタリー","name":"ティッシュ","product":"モンベル O.D.ポケットティッシュ","weight":32,"qty":1,"url":"","packed":false,"worn":false},
-  {"id":"seed-34","category":"ケア&サニタリー","name":"ウェットティッシュ","product":"ポケットワイプ","weight":21,"qty":2,"url":"","packed":false,"worn":false},
+  {"id":"seed-34","category":"ケア&サニタリー","name":"ティッシュ","product":"ポケットワイプ","weight":21,"qty":2,"url":"","packed":false,"worn":false},
   {"id":"seed-33","category":"ケア&サニタリー","name":"デンタルケア","product":"歯ブラシセット","weight":19,"qty":1,"url":"","packed":false,"worn":false},
   {"id":"seed-36","category":"ケア&サニタリー","name":"ヘアケア","product":"水のいらないシャンプー","weight":130,"qty":1,"url":"","packed":false,"worn":false},
   {"id":"seed-37","category":"ケア&サニタリー","name":"虫除け/ボディスプレー","product":"アウトドアボディスプレー ハッカ","weight":130,"qty":1,"url":"","packed":false,"worn":false},
@@ -397,12 +448,12 @@ const SEED = [
   {"id":"seed-44","category":"エマージェンシー","name":"耳栓","product":"トラベル イヤープラグス","weight":7,"qty":1,"url":"","packed":false,"worn":false},
 
   /* 食料&燃料 */
-  {"id":"seed-21","category":"食料&燃料","name":"水①","product":"","weight":2000,"qty":1,"url":"","packed":false,"worn":false},
-  {"id":"seed-22","category":"食料&燃料","name":"水②","product":"","weight":null,"qty":1,"url":"","packed":false,"worn":false},
-  {"id":"seed-23","category":"食料&燃料","name":"ペットボトル飲料","product":"い・ろ・は・す 550ml","weight":550,"qty":1,"url":"","packed":false,"worn":false},
+  {"id":"seed-21","category":"食料&燃料","name":"水/ボトル","product":"水①","weight":2000,"qty":1,"url":"","packed":false,"worn":false},
+  {"id":"seed-22","category":"食料&燃料","name":"水/ボトル","product":"水②","weight":null,"qty":1,"url":"","packed":false,"worn":false},
+  {"id":"seed-23","category":"食料&燃料","name":"水/ボトル","product":"い・ろ・は・す 550ml","weight":550,"qty":1,"url":"","packed":false,"worn":false},
   {"id":"seed-24","category":"食料&燃料","name":"食料","product":"行動食・フリーズドライ","weight":800,"qty":1,"url":"","packed":false,"worn":false},
-  {"id":"seed-25","category":"食料&燃料","name":"固形燃料","product":"FIREDRAGON","weight":17,"qty":7,"url":"","packed":false,"worn":false},
-  {"id":"seed-43","category":"食料&燃料","name":"固形燃料 (予備)","product":"FIREDRAGON","weight":12,"qty":1,"url":"","packed":false,"worn":false},
+  {"id":"seed-25","category":"食料&燃料","name":"燃料","product":"FIREDRAGON","weight":17,"qty":7,"url":"","packed":false,"worn":false},
+  {"id":"seed-43","category":"食料&燃料","name":"燃料","product":"FIREDRAGON (予備)","weight":12,"qty":1,"url":"","packed":false,"worn":false},
   {"id":"i17882752547046z1o","category":"食料&燃料","name":"ガス缶","product":"MSR イソプロ 110","weight":210,"qty":1,"url":"https://e-mot.co.jp/product/36927/?srsltid=AfmBOophORo_Wn0D-rO3rmtaFpOgr5Dz877156Tzh9iKBbFA9Mu6qINI","packed":false,"worn":false},
 
   /* その他 */
@@ -455,6 +506,29 @@ function renderBreakdown(catMap, bw){
     seg.title = `${cat}: ${fmt(val)}g`;
     bar.appendChild(seg);
   });
+}
+
+// 選択中のカテゴリに応じた道具名候補（datalist）の動的更新
+function updateNameDatalist(selectedCat){
+  const dl = $('#fNameList');
+  const cat = selectedCat || $('#fCategory').value;
+  
+  // 1. 既存アイテムから同一カテゴリの道具名を抽出
+  const registeredNames = items
+    .filter(i => i.category === cat && i.name)
+    .map(i => i.name.trim());
+
+  // 2. 推論ルール辞書にある標準的な道具名も候補に加える
+  const defaultNames = GEAR_INFERENCE_RULES
+    .filter(r => r.cat === cat)
+    .map(r => r.name);
+
+  // 重複を除去して統合
+  const uniqueNames = [...new Set([...registeredNames, ...defaultNames])];
+
+  dl.innerHTML = uniqueNames
+    .map(n => `<option value="${escapeHtml(n)}"></option>`)
+    .join('');
 }
 
 function render(){
@@ -558,7 +632,8 @@ function escapeHtml(str){
 }
 
 async function saveAndRender(){
-  localStorage.setItem('ul-gear-matrix-curated', JSON.stringify(items));
+  localStorage.setItem('ul-gear-matrix-v3', JSON.stringify(items));
+  updateNameDatalist($('#fCategory').value);
   render();
 }
 
@@ -568,8 +643,13 @@ function openSheet(id){
 
   $('#sheetTitle').textContent = it ? 'ギアの編集' : 'ギアの登録';
   $('#fCategory').innerHTML = CATEGORIES.map(c => `<option value="${c}">${c}</option>`).join('');
-  $('#fCategory').value = it ? it.category : (activeFilter !== 'すべて' ? activeFilter : CATEGORIES[0]);
   
+  const currentCat = it ? it.category : (activeFilter !== 'すべて' ? activeFilter : CATEGORIES[0]);
+  $('#fCategory').value = currentCat;
+  
+  // 開いた時点のカテゴリに応じたサジェスト候補を更新
+  updateNameDatalist(currentCat);
+
   $('#fName').value = it ? it.name || '' : '';
   $('#fProduct').value = it ? it.product || '' : '';
   $('#fWeight').value = it && it.weight !== null ? it.weight : '';
@@ -590,9 +670,13 @@ function closeSheet(){
   editingId = null;
 }
 
+$('#fCategory').addEventListener('change', (e) => {
+  updateNameDatalist(e.target.value);
+});
+
 $('#saveBtn').onclick = ()=>{
   const name = $('#fName').value.trim();
-  if(!name){ showToast('アイテム名を入力してください'); return; }
+  if(!name){ showToast('道具名を入力してください'); return; }
 
   const weightRaw = $('#fWeight').value;
   const payload = {
@@ -636,12 +720,57 @@ $('#selectAllBtn').onclick = ()=>{ items.forEach(i=>i.packed=true); saveAndRende
 $('#selectNoneBtn').onclick = ()=>{ items.forEach(i=>i.packed=false); saveAndRender(); };
 $('#searchInput').oninput = (e)=>{ searchQuery = e.target.value.trim().toLowerCase(); render(); };
 
-// Fast Parallel Web Fetching
+/* ---------- 高度なURL自動推論 & スペック解析ロジック ---------- */
+
+function cleanTitle(title){
+  return title
+    .replace(/^Title:\s*/i, '')
+    .replace(/\s*[|\-–—_].*?(Moonlightgear|山と道|YAMAP|BASE|楽天市場|Amazon|公式|Online\s*Store).*$/i, '')
+    .replace(/【.*?】|\[.*?\]/g, '')
+    .trim();
+}
+
+function convertToGrams(val, unit){
+  if(unit === 'kg') return Math.round(val * 1000);
+  if(unit === 'oz') return Math.round(val * 28.3495 * 10) / 10;
+  if(unit.startsWith('lb')) return Math.round(val * 453.592);
+  return Math.round(val * 10) / 10;
+}
+
+function extractSmartWeight(text){
+  const ctxRegex = /(?:重量|本体重量|平均重量|最小重量|Weight|Total\s*Weight)[\s:：]*([0-9.,]+)\s*(g|kg|oz|lbs?)\b/i;
+  const ctxMatch = text.match(ctxRegex);
+  if(ctxMatch){
+    return convertToGrams(parseFloat(ctxMatch[1].replace(/,/g, '')), ctxMatch[2].toLowerCase());
+  }
+
+  const lines = text.split('\n');
+  for(const line of lines){
+    if(/(重量|weight)/i.test(line)){
+      const lineMatch = line.match(/([0-9.,]+)\s*(g|kg|oz|lbs?)\b/i);
+      if(lineMatch){
+        return convertToGrams(parseFloat(lineMatch[1].replace(/,/g, '')), lineMatch[2].toLowerCase());
+      }
+    }
+  }
+  return null;
+}
+
+function inferGearMeta(title, text){
+  const corpus = (title + ' ' + text.slice(0, 500)).toLowerCase();
+  for(const rule of GEAR_INFERENCE_RULES){
+    if(rule.keywords.some(kw => corpus.includes(kw.toLowerCase()))){
+      return { category: rule.cat, name: rule.name, worn: rule.worn };
+    }
+  }
+  return null;
+}
+
 $('#fetchBtn').onclick = async ()=>{
   const url = $('#fUrl').value.trim();
   if(!url){ showFetchStatus('URLを入力してください', 'err'); return; }
 
-  showFetchStatus('スペック取得中...', '');
+  showFetchStatus('スペック・カテゴリ解析中...', '');
   const btn = $('#fetchBtn');
   btn.disabled = true;
 
@@ -653,21 +782,36 @@ $('#fetchBtn').onclick = async ()=>{
 
     const raw = await Promise.any(proxies.map(p => fetch(p).then(r => { if(!r.ok) throw 0; return r.text(); })));
     
-    let wMatch = raw.match(/([\d.]+)\s*k?g\b/i);
-    let weight = null;
-    if(wMatch){
-      weight = parseFloat(wMatch[1]);
-      if(/kg/i.test(wMatch[0])) weight *= 1000;
+    let rawTitle = '';
+    const tMatch = raw.match(/^Title:\s*(.+)$/im) || raw.match(/<title>(.*?)<\/title>/i);
+    if(tMatch) rawTitle = tMatch[1];
+    const productTitle = cleanTitle(rawTitle);
+
+    const weight = extractSmartWeight(raw);
+    const meta = inferGearMeta(productTitle, raw);
+
+    const filled = [];
+    if(productTitle && !$('#fProduct').value){
+      $('#fProduct').value = productTitle.slice(0, 60);
+      filled.push('製品名');
+    }
+    if(weight !== null){
+      $('#fWeight').value = weight;
+      filled.push(`重量(${weight}g)`);
+    }
+    if(meta){
+      $('#fCategory').value = meta.category;
+      updateNameDatalist(meta.category);
+      if(!$('#fName').value) $('#fName').value = meta.name;
+      $('#fWorn').checked = meta.worn;
+      filled.push(`分類(${meta.category} / ${meta.name})`);
     }
 
-    let title = '';
-    let tMatch = raw.match(/<title>(.*?)<\/title>/i) || raw.match(/^Title:\s*(.+)$/im);
-    if(tMatch) title = tMatch[1].replace(/ - .*$/, '').trim();
-
-    if(title && !$('#fProduct').value) $('#fProduct').value = title.slice(0, 60);
-    if(weight !== null && !$('#fWeight').value) $('#fWeight').value = weight;
-
-    showFetchStatus(`取得完了: ${weight ? weight+'g' : '重量未検知'}`, 'ok');
+    if(filled.length){
+      showFetchStatus(`自動入力: ${filled.join('・')}`, 'ok');
+    } else {
+      showFetchStatus('取得完了（手動で調整してください）', 'ok');
+    }
   } catch(e) {
     showFetchStatus('自動取得に失敗しました (手動入力してください)', 'err');
   } finally {
@@ -720,7 +864,7 @@ $('#importFile').onchange = async (e)=>{
 
 // Initial Load
 (function init(){
-  const saved = localStorage.getItem('ul-gear-matrix-curated');
+  const saved = localStorage.getItem('ul-gear-matrix-v3');
   items = saved ? JSON.parse(saved) : SEED;
   render();
 })();

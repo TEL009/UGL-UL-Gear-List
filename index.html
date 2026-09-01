@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0B120F">
+<title>UL ギアリスト</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0B120F;
+    --surface:#131E19;
+    --surface-hi:#1A2922;
+    --line:#22362C;
+    --line-active:#3D5E4E;
+    --text:#ECEFEA;
+    --text-dim:#889D92;
+    --text-faint:#4E6358;
+    --amber:#FF9F1C;
+    --teal:#2EC4B6;
+    --green:#4ADE80;
+    --red:#E76F51;
+    --radius:12px;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:'Noto Sans JP',sans-serif;-webkit-font-smoothing:antialiased;}
+  body{min-height:100vh;padding-bottom:110px;}
+  .mono{font-family:'JetBrains Mono',monospace;}
+  .sg{font-family:'Space Grotesk',sans-serif;}
+
+  #app{max-width:480px;margin:0 auto;position:relative;}
+
+  /* Header & Metrics */
+  header{
+    position:sticky;top:0;z-index:20;
+    background:rgba(11,18,15,0.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+    border-bottom:1px solid var(--line);
+    padding:calc(env(safe-area-inset-top,0px) + 14px) 16px 12px;
+  }
+  .top-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+  .logo{font-size:15px;font-weight:700;letter-spacing:.08em;color:var(--teal);text-transform:uppercase;}
+  .header-actions{display:flex;gap:8px;}
+  .icon-btn{
+    width:32px;height:32px;border-radius:8px;background:var(--surface);
+    border:1px solid var(--line);display:flex;align-items:center;justify-content:center;
+    color:var(--text-dim);cursor:pointer;
+  }
+  .icon-btn:active{background:var(--surface-hi);color:var(--text);}
+  .icon-btn svg{width:15px;height:15px;}
+
+  /* Weight Cards */
+  .metrics-grid{
+    display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:8px;margin-bottom:10px;
+  }
+  .m-card{
+    background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:9px 10px;
+    display:flex;flex-direction:column;justify-content:space-between;
+  }
+  .m-card.main{border-color:var(--line-active);background:var(--surface-hi);}
+  .m-lbl{font-size:10px;font-weight:700;letter-spacing:.04em;color:var(--text-dim);text-transform:uppercase;}
+  .m-val{font-size:20px;font-weight:700;line-height:1.2;margin-top:2px;}
+  .m-val.bw{color:var(--teal);}
+  .m-val.pw{color:var(--amber);}
+  .m-val.worn{color:var(--text-dim);}
+  .m-unit{font-size:11px;font-weight:500;color:var(--text-faint);margin-left:1px;}
+  .ul-badge{
+    font-size:9px;font-weight:700;display:inline-block;padding:1px 5px;border-radius:4px;
+    margin-top:2px;width:fit-content;letter-spacing:.03em;
+  }
+  .ul-badge.pass{background:rgba(74,222,128,0.15);color:var(--green);}
+  .ul-badge.warn{background:rgba(255,159,28,0.15);color:var(--amber);}
+
+  /* Breakdown bar */
+  .breakdown{height:4px;background:var(--surface-hi);border-radius:2px;display:flex;overflow:hidden;gap:1px;margin-bottom:10px;}
+  .bd-segment{height:100%;transition:width .3s ease;}
+
+  /* Controls */
+  .bar-tools{display:flex;align-items:center;justify-content:space-between;font-size:11.5px;}
+  .mode-switch{display:flex;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:2px;}
+  .m-btn{border:none;background:none;color:var(--text-faint);font-size:11.5px;font-weight:700;padding:4px 10px;border-radius:6px;cursor:pointer;}
+  .m-btn.active{background:var(--teal);color:#08100C;}
+  .batch-actions button{background:none;border:none;color:var(--teal);font-size:11px;font-weight:600;cursor:pointer;padding:0;}
+  .batch-actions .dot{margin:0 5px;color:var(--text-faint);}
+
+  /* Search & Filter Chips */
+  .filter-area{padding:10px 16px 0;}
+  .search-input{
+    width:100%;background:var(--surface);border:1px solid var(--line);border-radius:8px;
+    padding:8px 12px;color:var(--text);font-size:13px;outline:none;
+  }
+  .search-input:focus{border-color:var(--line-active);}
+  .chips{display:flex;gap:6px;overflow-x:auto;padding:8px 16px 2px;scrollbar-width:none;}
+  .chips::-webkit-scrollbar{display:none;}
+  .chip{
+    flex-shrink:0;padding:5px 11px;border-radius:99px;font-size:12px;font-weight:500;
+    background:var(--surface);border:1px solid var(--line);color:var(--text-dim);cursor:pointer;
+  }
+  .chip.active{background:var(--text);border-color:var(--text);color:#08100C;font-weight:700;}
+
+  /* Main List */
+  main{padding:8px 16px 24px;}
+  .cat-block + .cat-block{margin-top:18px;}
+  .cat-header{display:flex;align-items:baseline;justify-content:space-between;padding:0 2px 6px;border-bottom:1px solid var(--line);margin-bottom:6px;}
+  .cat-header .title{font-size:12px;font-weight:700;letter-spacing:.05em;color:var(--text-dim);text-transform:uppercase;}
+  .cat-header .sub{font-size:12px;color:var(--text-faint);}
+  .cat-header .sub b{color:var(--text);font-weight:700;}
+
+  .item-row{
+    display:flex;align-items:center;gap:10px;
+    background:var(--surface);border:1px solid var(--line);border-radius:10px;
+    padding:10px 12px;margin-bottom:6px;cursor:pointer;transition:border-color .15s ease,opacity .15s ease;
+  }
+  .item-row:active{background:var(--surface-hi);}
+  .item-row.unpacked{opacity:.35;border-style:dashed;}
+  .item-row.worn{border-left:3px solid var(--teal);}
+  .item-row.edit-mode{border-color:var(--amber);}
+  
+  .item-main{flex:1;min-width:0;}
+  .item-name-row{display:flex;align-items:center;gap:6px;font-size:13.5px;font-weight:600;}
+  .item-product{font-size:11.5px;color:var(--text-dim);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .tag{font-size:9px;font-weight:700;padding:1px 4px;border-radius:3px;text-transform:uppercase;}
+  .tag-worn{background:rgba(46,196,182,0.15);color:var(--teal);}
+  .tag-link{color:var(--teal);text-decoration:none;font-size:11px;}
+
+  .item-right{text-align:right;flex-shrink:0;}
+  .item-weight{font-size:14px;font-weight:700;}
+  .item-qty{font-size:10.5px;color:var(--text-faint);margin-top:1px;}
+
+  /* FAB */
+  .fab{
+    position:fixed;right:20px;bottom:calc(env(safe-area-inset-bottom,0px) + 20px);
+    width:52px;height:52px;border-radius:14px;background:var(--teal);color:#08100C;
+    border:none;font-size:24px;display:flex;align-items:center;justify-content:center;
+    box-shadow:0 10px 24px rgba(0,0,0,.5);cursor:pointer;z-index:30;font-weight:700;
+  }
+  .fab:active{transform:scale(.95);}
+
+  /* Sheet Modal */
+  .backdrop{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:40;opacity:0;pointer-events:none;transition:opacity .2s ease;}
+  .backdrop.open{opacity:1;pointer-events:auto;}
+  .sheet{
+    position:fixed;left:0;right:0;bottom:0;z-index:50;max-width:480px;margin:0 auto;
+    background:var(--surface);border-radius:18px 18px 0 0;border:1px solid var(--line);border-bottom:none;
+    padding:16px 18px calc(env(safe-area-inset-bottom,0px) + 20px);
+    transform:translateY(105%);transition:transform .25s cubic-bezier(.32,.72,0,1);max-height:90vh;overflow-y:auto;
+  }
+  .sheet.open{transform:translateY(0);}
+  .sheet-handle{width:36px;height:4px;background:var(--line);border-radius:99px;margin:0 auto 14px;}
+  .sheet h2{font-size:15px;font-weight:700;margin:0 0 14px;letter-spacing:.02em;}
+
+  .field{margin-bottom:12px;}
+  .field label{display:block;font-size:11px;font-weight:700;color:var(--text-dim);margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em;}
+  .field input, .field select{
+    width:100%;background:var(--bg);border:1px solid var(--line);border-radius:8px;
+    padding:9px 10px;color:var(--text);font-size:14px;font-family:inherit;outline:none;
+  }
+  .field input:focus, .field select:focus{border-color:var(--teal);}
+  .toggle-field{display:flex;align-items:center;justify-content:space-between;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 12px;margin-bottom:12px;}
+  .toggle-field span{font-size:13px;font-weight:500;}
+
+  .url-box{display:flex;gap:6px;}
+  .url-box input{flex:1;}
+  .btn-fetch{background:var(--surface-hi);border:1px solid var(--line);color:var(--teal);border-radius:8px;padding:0 12px;font-weight:700;font-size:12px;cursor:pointer;}
+  .btn-fetch:active{background:var(--line);}
+  .fetch-status{font-size:11px;margin-top:4px;min-height:14px;}
+  .fetch-status.err{color:var(--red);}
+  .fetch-status.ok{color:var(--green);}
+
+  .btn-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px;}
+  .btn{padding:11px;border-radius:8px;font-size:13.5px;font-weight:700;border:none;cursor:pointer;text-align:center;}
+  .btn-main{background:var(--teal);color:#08100C;}
+  .btn-sec{background:var(--bg);color:var(--text-dim);border:1px solid var(--line);}
+  .btn-del{background:transparent;color:var(--red);border:1px solid rgba(231,111,81,.3);grid-column:span 2;margin-top:4px;}
+
+  .toast{
+    position:fixed;left:50%;bottom:90px;transform:translateX(-50%);
+    background:var(--surface-hi);border:1px solid var(--line);color:var(--text);
+    padding:7px 14px;border-radius:99px;font-size:12px;font-weight:600;z-index:60;
+    opacity:0;transition:opacity .2s ease;pointer-events:none;
+  }
+  .toast.show{opacity:1;}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="top-row">
+      <span class="logo sg">UL Gear Matrix</span>
+      <div class="header-actions">
+        <div class="icon-btn" id="exportBtn" title="エクスポート"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg></div>
+        <div class="icon-btn" id="importBtn" title="インポート"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21V9m0 0l-4 4m4-4l4 4M4 7V5a2 2 0 012-2h12a2 2 0 012 2v2"/></svg></div>
+        <input type="file" id="importFile" accept="application/json" style="display:none;">
+      </div>
+    </div>
+
+    <div class="metrics-grid">
+      <div class="m-card main">
+        <div class="m-lbl">Base Weight</div>
+        <div class="m-val bw mono" id="bwVal">0<span class="m-unit">g</span></div>
+        <div id="ulStatus" class="ul-badge pass">UL QUALIFIED</div>
+      </div>
+      <div class="m-card">
+        <div class="m-lbl">Pack Weight</div>
+        <div class="m-val pw mono" id="pwVal">0<span class="m-unit">g</span></div>
+        <div class="m-lbl" style="font-size:9px;margin-top:2px;">Consumables</div>
+      </div>
+      <div class="m-card">
+        <div class="m-lbl">Worn / Skin-out</div>
+        <div class="m-val worn mono" id="wornVal">0<span class="m-unit">g</span></div>
+        <div class="m-lbl" style="font-size:9px;margin-top:2px;">Total Load</div>
+      </div>
+    </div>
+
+    <div class="breakdown" id="breakdownBar"></div>
+
+    <div class="bar-tools">
+      <div class="mode-switch">
+        <button id="modeSelectBtn" class="m-btn active" type="button">パッキング</button>
+        <button id="modeEditBtn" class="m-btn" type="button">ギア管理</button>
+      </div>
+      <div class="batch-actions" id="batchControls">
+        <button id="selectAllBtn" type="button">全選択</button>
+        <span class="dot">/</span>
+        <button id="selectNoneBtn" type="button">解除</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="filter-area">
+    <input type="text" id="searchInput" class="search-input" placeholder="ギア名・製品名で絞り込み...">
+  </div>
+  <div class="chips" id="chips"></div>
+
+  <main id="list"></main>
+</div>
+
+<button class="fab" id="addFab">+</button>
+
+<div class="backdrop" id="backdrop"></div>
+<div class="sheet" id="sheet">
+  <div class="sheet-handle"></div>
+  <h2 id="sheetTitle">ギアの登録</h2>
+  
+  <div class="field">
+    <label>スペック自動取得 (URL)</label>
+    <div class="url-box">
+      <input id="fUrl" type="url" placeholder="https://...">
+      <button class="btn-fetch" id="fetchBtn" type="button">取得</button>
+    </div>
+    <div class="fetch-status" id="fetchStatus"></div>
+  </div>
+
+  <div class="field">
+    <label>カテゴリ</label>
+    <select id="fCategory"></select>
+  </div>
+
+  <div class="field">
+    <label>ギア分類 / アイテム名</label>
+    <input id="fName" type="text" list="fNameList" placeholder="例: シェルター, クッカー">
+    <datalist id="fNameList"></datalist>
+  </div>
+
+  <div class="field">
+    <label>製品名 / モデル</label>
+    <input id="fProduct" type="text" placeholder="例: Mid 1 Tarp">
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+    <div class="field">
+      <label>重量 (g)</label>
+      <input id="fWeight" type="number" step="0.1" inputmode="decimal" placeholder="0.0">
+    </div>
+    <div class="field">
+      <label>数量</label>
+      <input id="fQty" type="number" inputmode="numeric" value="1" min="1">
+    </div>
+  </div>
+
+  <div class="toggle-field">
+    <span>身につける装備 (Worn / BW除外)</span>
+    <input type="checkbox" id="fWorn">
+  </div>
+
+  <div class="btn-grid">
+    <button class="btn btn-sec" id="cancelBtn">閉じる</button>
+    <button class="btn btn-main" id="saveBtn">保存</button>
+    <button class="btn btn-del" id="deleteBtn" style="display:none;">このギアを削除</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const CATEGORIES = ['バックパック','シェルター&設営','スリーピング','クッキング','ウェア','エレクトロニクス','エマージェンシー','食料&燃料','その他'];
+const CONSUMABLE_CAT = '食料&燃料';
+const CAT_COLORS = ['#3A86FF','#8338EC','#FF006E','#FB5607','#FFBE0B','#2EC4B6','#4ADE80','#E76F51','#A0AAB2'];
+
+const SEED = [
+  {id:'s1', category:'バックパック', name:'メインパック', product:'WAYPOINT 35', weight:666, qty:1, worn:false, packed:true, url:''},
+  {id:'s2', category:'シェルター&設営', name:'シェルター', product:'Mid 1 Tarp', weight:249, qty:1, worn:false, packed:true, url:''},
+  {id:'s3', category:'シェルター&設営', name:'ペグ', product:'カーボンペグ 12cm', weight:4, qty:8, worn:false, packed:true, url:''},
+  {id:'s4', category:'スリーピング', name:'キルト', product:'Revelation APEX 50°F', weight:334, qty:1, worn:false, packed:true, url:''},
+  {id:'s5', category:'スリーピング', name:'マット', product:'Tensor Elite Regular', weight:231, qty:1, worn:false, packed:true, url:''},
+  {id:'s6', category:'クッキング', name:'ストーブ', product:'turtle stove', weight:4, qty:1, worn:false, packed:true, url:''},
+  {id:'s7', category:'クッキング', name:'マグ', product:'チタンマグ 450ml', weight:62, qty:1, worn:false, packed:true, url:''},
+  {id:'s8', category:'ウェア', name:'インサレーション', product:'コアフーディー M', weight:124, qty:1, worn:false, packed:true, url:''},
+  {id:'s9', category:'ウェア', name:'トレッキングポール', product:'カーボンポール', weight:280, qty:1, worn:true, packed:true, url:''},
+  {id:'s10', category:'食料&燃料', name:'行動食・フリーズドライ', product:'2日分', weight:900, qty:1, worn:false, packed:true, url:''},
+  {id:'s11', category:'食料&燃料', name:'水', product:'1.5L', weight:1500, qty:1, worn:false, packed:true, url:''}
+];
+
+let items = [];
+let activeFilter = 'すべて';
+let searchQuery = '';
+let editMode = false;
+let editingId = null;
+
+const $ = (s)=>document.querySelector(s);
+
+function fmt(n){ return Number(n).toLocaleString('ja-JP', {maximumFractionDigits:1}); }
+function itemWeight(it){ return (Number(it.weight)||0) * (Number(it.qty)||1); }
+
+function computeWeights(){
+  let bw = 0, pw = 0, worn = 0, catMap = {};
+  CATEGORIES.forEach(c => catMap[c] = 0);
+
+  items.forEach(it => {
+    if(!it.packed) return;
+    const w = itemWeight(it);
+    if(it.worn){
+      worn += w;
+    } else if(it.category === CONSUMABLE_CAT){
+      pw += w;
+    } else {
+      bw += w;
+      catMap[it.category] = (catMap[it.category] || 0) + w;
+    }
+  });
+
+  pw += bw;
+  return { bw, pw, worn, skinOut: pw + worn, catMap };
+}
+
+function renderBreakdown(catMap, bw){
+  const bar = $('#breakdownBar');
+  bar.innerHTML = '';
+  if(bw === 0) return;
+  CATEGORIES.forEach((cat, idx) => {
+    const val = catMap[cat] || 0;
+    if(val <= 0) return;
+    const seg = document.createElement('div');
+    seg.className = 'bd-segment';
+    seg.style.width = `${(val / bw) * 100}%`;
+    seg.style.backgroundColor = CAT_COLORS[idx % CAT_COLORS.length];
+    seg.title = `${cat}: ${fmt(val)}g`;
+    bar.appendChild(seg);
+  });
+}
+
+function render(){
+  const { bw, pw, worn, catMap } = computeWeights();
+  $('#bwVal').innerHTML = `${fmt(bw)}<span class="m-unit">g</span>`;
+  $('#pwVal').innerHTML = `${fmt(pw)}<span class="m-unit">g</span>`;
+  $('#wornVal').innerHTML = `${fmt(worn)}<span class="m-unit">g</span>`;
+
+  const statusEl = $('#ulStatus');
+  if(bw <= 4500){
+    statusEl.textContent = 'UL QUALIFIED (≦4.5kg)';
+    statusEl.className = 'ul-badge pass';
+  } else {
+    statusEl.textContent = `OVER UL (+${fmt(bw - 4500)}g)`;
+    statusEl.className = 'ul-badge warn';
+  }
+
+  renderBreakdown(catMap, bw);
+
+  // Chips
+  const chipsEl = $('#chips');
+  chipsEl.innerHTML = '';
+  ['すべて', ...CATEGORIES].forEach(cat => {
+    const c = document.createElement('div');
+    c.className = `chip ${activeFilter === cat ? 'active' : ''}`;
+    c.textContent = cat;
+    c.onclick = ()=>{ activeFilter = cat; render(); };
+    chipsEl.appendChild(c);
+  });
+
+  // Main List
+  const listEl = $('#list');
+  listEl.innerHTML = '';
+  const cats = activeFilter === 'すべて' ? CATEGORIES : [activeFilter];
+  let renderedCount = 0;
+
+  cats.forEach(cat => {
+    let catItems = items.filter(i => i.category === cat);
+    if(searchQuery){
+      catItems = catItems.filter(i => 
+        (i.name||'').toLowerCase().includes(searchQuery) || 
+        (i.product||'').toLowerCase().includes(searchQuery)
+      );
+    }
+    if(!catItems.length) return;
+    renderedCount += catItems.length;
+
+    const block = document.createElement('div');
+    block.className = 'cat-block';
+
+    const subtotal = catItems.reduce((acc, it) => it.packed && !it.worn && it.category !== CONSUMABLE_CAT ? acc + itemWeight(it) : acc, 0);
+
+    block.innerHTML = `
+      <div class="cat-header">
+        <span class="title">${cat}</span>
+        <span class="sub"><b>${fmt(subtotal)}</b> g</span>
+      </div>
+    `;
+
+    catItems.forEach(it => {
+      const row = document.createElement('div');
+      row.className = `item-row ${!it.packed ? 'unpacked' : ''} ${it.worn ? 'worn' : ''} ${editMode ? 'edit-mode' : ''}`;
+      
+      row.innerHTML = `
+        <div class="item-main">
+          <div class="item-name-row">
+            <span>${escapeHtml(it.name || '名称未設定')}</span>
+            ${it.worn ? '<span class="tag tag-worn">WORN</span>' : ''}
+            ${it.url ? `<a href="${escapeHtml(it.url)}" target="_blank" class="tag-link" onclick="event.stopPropagation()">↗</a>` : ''}
+          </div>
+          ${it.product ? `<div class="item-product">${escapeHtml(it.product)}</div>` : ''}
+        </div>
+        <div class="item-right">
+          <div class="item-weight mono">${it.weight !== null ? fmt(it.weight) : '-'}<span style="font-size:10px;color:var(--text-faint);">g</span></div>
+          <div class="item-qty mono">× ${it.qty || 1}</div>
+        </div>
+      `;
+
+      row.onclick = () => {
+        if(editMode){
+          openSheet(it.id);
+        } else {
+          it.packed = !it.packed;
+          saveAndRender();
+        }
+      };
+
+      block.appendChild(row);
+    });
+
+    listEl.appendChild(block);
+  });
+
+  if(!renderedCount){
+    listEl.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-faint);font-size:13px;">アイテムがありません</div>';
+  }
+}
+
+function escapeHtml(str){
+  return String(str).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+async function saveAndRender(){
+  localStorage.setItem('ul-gear-matrix', JSON.stringify(items));
+  render();
+}
+
+function openSheet(id){
+  editingId = id || null;
+  const it = id ? items.find(i => i.id === id) : null;
+
+  $('#sheetTitle').textContent = it ? 'ギアの編集' : 'ギアの登録';
+  $('#fCategory').innerHTML = CATEGORIES.map(c => `<option value="${c}">${c}</option>`).join('');
+  $('#fCategory').value = it ? it.category : (activeFilter !== 'すべて' ? activeFilter : CATEGORIES[0]);
+  
+  $('#fName').value = it ? it.name || '' : '';
+  $('#fProduct').value = it ? it.product || '' : '';
+  $('#fWeight').value = it && it.weight !== null ? it.weight : '';
+  $('#fQty').value = it ? it.qty || 1 : 1;
+  $('#fUrl').value = it ? it.url || '' : '';
+  $('#fWorn').checked = it ? !!it.worn : false;
+
+  $('#deleteBtn').style.display = it ? 'block' : 'none';
+  $('#fetchStatus').textContent = '';
+
+  $('#backdrop').classList.add('open');
+  $('#sheet').classList.add('open');
+}
+
+function closeSheet(){
+  $('#backdrop').classList.remove('open');
+  $('#sheet').classList.remove('open');
+  editingId = null;
+}
+
+$('#saveBtn').onclick = ()=>{
+  const name = $('#fName').value.trim();
+  if(!name){ showToast('アイテム名を入力してください'); return; }
+
+  const weightRaw = $('#fWeight').value;
+  const payload = {
+    category: $('#fCategory').value,
+    name,
+    product: $('#fProduct').value.trim(),
+    weight: weightRaw === '' ? null : parseFloat(weightRaw),
+    qty: parseInt($('#fQty').value, 10) || 1,
+    url: $('#fUrl').value.trim(),
+    worn: $('#fWorn').checked,
+    packed: true
+  };
+
+  if(editingId){
+    const idx = items.findIndex(i => i.id === editingId);
+    items[idx] = { ...items[idx], ...payload };
+  } else {
+    items.unshift({ id: 'g_' + Date.now(), ...payload });
+  }
+
+  saveAndRender();
+  closeSheet();
+  showToast('保存しました');
+};
+
+$('#deleteBtn').onclick = ()=>{
+  if(!editingId) return;
+  items = items.filter(i => i.id !== editingId);
+  saveAndRender();
+  closeSheet();
+  showToast('削除しました');
+};
+
+$('#addFab').onclick = ()=> openSheet(null);
+$('#cancelBtn').onclick = closeSheet;
+$('#backdrop').onclick = closeSheet;
+
+$('#modeSelectBtn').onclick = ()=>{ editMode = false; $('#modeSelectBtn').classList.add('active'); $('#modeEditBtn').classList.remove('active'); render(); };
+$('#modeEditBtn').onclick = ()=>{ editMode = true; $('#modeEditBtn').classList.add('active'); $('#modeSelectBtn').classList.remove('active'); render(); };
+$('#selectAllBtn').onclick = ()=>{ items.forEach(i=>i.packed=true); saveAndRender(); };
+$('#selectNoneBtn').onclick = ()=>{ items.forEach(i=>i.packed=false); saveAndRender(); };
+$('#searchInput').oninput = (e)=>{ searchQuery = e.target.value.trim().toLowerCase(); render(); };
+
+// Fast Parallel Web Fetching
+$('#fetchBtn').onclick = async ()=>{
+  const url = $('#fUrl').value.trim();
+  if(!url){ showFetchStatus('URLを入力してください', 'err'); return; }
+
+  showFetchStatus('スペック取得中...', '');
+  const btn = $('#fetchBtn');
+  btn.disabled = true;
+
+  try {
+    const proxies = [
+      `https://r.jina.ai/${url}`,
+      `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`
+    ];
+
+    const raw = await Promise.any(proxies.map(p => fetch(p).then(r => { if(!r.ok) throw 0; return r.text(); })));
+    
+    // Parse Weight
+    let wMatch = raw.match(/([\d.]+)\s*k?g\b/i);
+    let weight = null;
+    if(wMatch){
+      weight = parseFloat(wMatch[1]);
+      if(/kg/i.test(wMatch[0])) weight *= 1000;
+    }
+
+    // Parse Title
+    let title = '';
+    let tMatch = raw.match(/<title>(.*?)<\/title>/i) || raw.match(/^Title:\s*(.+)$/im);
+    if(tMatch) title = tMatch[1].replace(/ - .*$/, '').trim();
+
+    if(title && !$('#fProduct').value) $('#fProduct').value = title.slice(0, 60);
+    if(weight !== null && !$('#fWeight').value) $('#fWeight').value = weight;
+
+    showFetchStatus(`取得完了: ${weight ? weight+'g' : '重量未検知'}`, 'ok');
+  } catch(e) {
+    showFetchStatus('自動取得に失敗しました (手動入力してください)', 'err');
+  } finally {
+    btn.disabled = false;
+  }
+};
+
+function showFetchStatus(msg, cls){
+  const el = $('#fetchStatus');
+  el.textContent = msg;
+  el.className = `fetch-status ${cls}`;
+}
+
+function showToast(msg){
+  const t = $('#toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(showToast._timer);
+  showToast._timer = setTimeout(()=> t.classList.remove('show'), 1600);
+}
+
+// Export / Import
+$('#exportBtn').onclick = ()=>{
+  const blob = new Blob([JSON.stringify({ app:'UL-Gear-Matrix', items }, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `gear-list-${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+};
+
+$('#importBtn').onclick = ()=> $('#importFile').click();
+$('#importFile').onchange = async (e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  try {
+    const data = JSON.parse(await file.text());
+    if(Array.isArray(data.items || data)){
+      items = data.items || data;
+      saveAndRender();
+      showToast('インポート完了');
+    }
+  } catch(err) {
+    showToast('読み込みに失敗しました');
+  }
+};
+
+// Initial Load
+(function init(){
+  const saved = localStorage.getItem('ul-gear-matrix');
+  items = saved ? JSON.parse(saved) : SEED;
+  render();
+})();
+</script>
+</body>
+</html>

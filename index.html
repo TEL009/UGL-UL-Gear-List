@@ -260,13 +260,13 @@
 
   <div class="field">
     <label>ギア分類 / アイテム名</label>
-    <input id="fName" type="text" list="fNameList" placeholder="例: シェルター, クッカー">
+    <input id="fName" type="text" list="fNameList" placeholder="例: ビビィサック, クッカー">
     <datalist id="fNameList"></datalist>
   </div>
 
   <div class="field">
     <label>製品名 / モデル</label>
-    <input id="fProduct" type="text" placeholder="例: Mid 1 Tarp">
+    <input id="fProduct" type="text" placeholder="例: event soul bivy">
   </div>
 
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
@@ -295,22 +295,88 @@
 <div class="toast" id="toast"></div>
 
 <script>
-const CATEGORIES = ['バックパック','シェルター&設営','スリーピング','クッキング','ウェア','エレクトロニクス','エマージェンシー','食料&燃料','その他'];
+const CATEGORIES = ['バックパック','テント&設営道具','就寝具','衣類','クッカー＆カトラリー','食料&燃料','その他','ファーストエイドキット'];
 const CONSUMABLE_CAT = '食料&燃料';
-const CAT_COLORS = ['#3A86FF','#8338EC','#FF006E','#FB5607','#FFBE0B','#2EC4B6','#4ADE80','#E76F51','#A0AAB2'];
+const CAT_COLORS = ['#3A86FF','#8338EC','#FF006E','#FB5607','#FFBE0B','#2EC4B6','#4ADE80','#E76F51'];
 
 const SEED = [
-  {id:'s1', category:'バックパック', name:'メインパック', product:'WAYPOINT 35', weight:666, qty:1, worn:false, packed:true, url:''},
-  {id:'s2', category:'シェルター&設営', name:'シェルター', product:'Mid 1 Tarp', weight:249, qty:1, worn:false, packed:true, url:''},
-  {id:'s3', category:'シェルター&設営', name:'ペグ', product:'カーボンペグ 12cm', weight:4, qty:8, worn:false, packed:true, url:''},
-  {id:'s4', category:'スリーピング', name:'キルト', product:'Revelation APEX 50°F', weight:334, qty:1, worn:false, packed:true, url:''},
-  {id:'s5', category:'スリーピング', name:'マット', product:'Tensor Elite Regular', weight:231, qty:1, worn:false, packed:true, url:''},
-  {id:'s6', category:'クッキング', name:'ストーブ', product:'turtle stove', weight:4, qty:1, worn:false, packed:true, url:''},
-  {id:'s7', category:'クッキング', name:'マグ', product:'チタンマグ 450ml', weight:62, qty:1, worn:false, packed:true, url:''},
-  {id:'s8', category:'ウェア', name:'インサレーション', product:'コアフーディー M', weight:124, qty:1, worn:false, packed:true, url:''},
-  {id:'s9', category:'ウェア', name:'トレッキングポール', product:'カーボンポール', weight:280, qty:1, worn:true, packed:true, url:''},
-  {id:'s10', category:'食料&燃料', name:'行動食・フリーズドライ', product:'2日分', weight:900, qty:1, worn:false, packed:true, url:''},
-  {id:'s11', category:'食料&燃料', name:'水', product:'1.5L', weight:1500, qty:1, worn:false, packed:true, url:''}
+  {"id":"seed-1","category":"テント&設営道具","name":"ビビィサック","product":"event soul bivy","weight":318,"qty":1,"url":"","packed":false,"worn":false},
+  {"id":"seed-2","category":"テント&設営道具","name":"ペグ","product":"打刀","weight":16,"qty":7,"url":"","packed":false,"worn":false},
+  {"id":"seed-3","category":"テント&設営道具","name":"ガイライン","product":"ガイライン 2m 自在付き","weight":9,"qty":4,"url":"","packed":false,"worn":false},
+  {"id":"seed-4","category":"就寝具","name":"シュラフ","product":"Revelation 850 30°F Down Ver","weight":561,"qty":1,"url":"","packed":false,"worn":false},
+  {"id":"seed-5","category":"就寝具","name":"スリーピングマット","product":"Tensor™ Elite/Regular","weight":231,"qty":1,"url":"","packed":false,"worn":false},
+  {"id":"seed-6","category":"就寝具","name":"ピロー","product":"U.L.エアピロー","weight":68,"qty":1,"url":"","packed":false,"worn":false},
+  {"id":"seed-9","category":"衣類","name":"レインスカート","product":"DCFレインキルト","weight":54,"qty":1,"url":"","packed":false,"worn":false},
+  {"id":"seed-10","category":"衣類","name":"就寝着","product":"コアフーディー M","weight":124,"qty":1,"url":"","packed":false,"worn":false},
+  {"id":"seed-11","category":"衣類","name":"就寝着","product":"コアタイツ L","weight":142,"qty":1,"url":"","packed":false,"worn":false},
+  {"id":"seed-12","category":"衣類","name":"就寝着","product":"コアソックス L","weight":40,"qty":1,"url":"","packed":false,"worn":false},
+  {"id":"seed-13","category":"クッカー＆カトラリー","name":"クッカー","product":"UNHALFDRAWING LIGHT WEIGHT Aluminium 500","weight":40,"qty":1,"url":"","packed":false,"worn":false},
+  {"id":"seed-14","category":"クッカー＆カトラリー","name":"クッカー","product":"Ti 220 NH Demitasse","weight":33,"qty":1,"url":"","packed":false,"worn":false},
+  {"id":"seed-15","category":"クッカー＆カトラリー","name":"ストーブ","product":"アルミホイル＋カーボンフェルト","weight":5,"qty":1,"url":"","packed":false,"worn":false},
+  {"id":"seed-16","category":"クッカー＆カトラリー","name":"五徳","product":"T0.3 triveTi","weight":3,"qty":1,"url":"","packed":false,"worn":false},
+  {"id":"seed-17","category":"クッカー＆カトラリー","name":"カトラリー","product":"Tim2","weight":11,"qty":1,"url":"","packed":false,"worn":false},
+  {"id":"seed-18","category":"クッカー＆カトラリー","name":"ライター","product":"スリムライター J23","weight":14,"qty":1,"url":"","packed":false,"worn":false},
+  {"id":"seed-19","category":"クッカー＆カトラリー","name":"クッカーハンドル","product":"ReMax Potlifter","weight":10,"qty":1,"url":"","packed":false,"worn":false},
+  {"id":"seed-20","category":"クッカー＆カトラリー","name":"風防","product":"Titanium Windscreen 改","weight":3,"qty":1,"url":"","packed":false,"worn":false},
+  {"id":"seed-21","category":"食料&燃料","name":"水①","product":"","weight":2000,"qty":1,"url":"","packed":false,"worn":false},
+  {"id":"seed-22","category":"食料&燃料","name":"水②","product":"","weight":null,"qty":1,"url":"","packed":false,"worn":false},
+  {"id":"seed-23","category":"食料&燃料","name":"い・ろ・は・す","product":"","weight":550,"qty":1,"url":"","packed":false,"worn":false},
+  {"id":"seed-24","category":"食料&燃料","name":"食料","product":"","weight":800,"qty":1,"url":"","packed":false,"worn":false},
+  {"id":"seed-25","category":"食料&燃料","name":"燃料","product":"FIREDORAGON","weight":17,"qty":7,"url":"","packed":false,"worn":false},
+  {"id":"seed-26","category":"その他","name":"ヘッドライト","product":"MS i1","weight":125,"qty":1,"url":"","packed":false,"worn":false},
+  {"id":"seed-27","category":"その他","name":"バッテリー","product":"MS-LB3","weight":50,"qty":1,"url":"","packed":false,"worn":false},
+  {"id":"seed-29","category":"その他","name":"テーブル","product":"TiNY Table Al & Carbon","weight":93,"qty":1,"url":"","packed":false,"worn":false},
+  {"id":"seed-30","category":"その他","name":"トイレ類","product":"O.D.トイレキット","weight":38,"qty":1,"url":"","packed":false,"worn":false},
+  {"id":"seed-31","category":"その他","name":"トイレ類","product":"O.D.ポケットティッシュ","weight":32,"qty":1,"url":"","packed":false,"worn":false},
+  {"id":"seed-32","category":"その他","name":"コジー/保温バック","product":"Insulite Pouch Small","weight":25,"qty":1,"url":"","packed":false,"worn":false},
+  {"id":"seed-33","category":"その他","name":"ボディケア類","product":"歯ブラシセット","weight":19,"qty":1,"url":"","packed":false,"worn":false},
+  {"id":"seed-34","category":"その他","name":"ティッシュ類","product":"ポケットワイプ","weight":21,"qty":2,"url":"","packed":false,"worn":false},
+  {"id":"seed-35","category":"その他","name":"トレッキングポール","product":"トレッキングポール","weight":289,"qty":2,"url":"","packed":false,"worn":true},
+  {"id":"seed-36","category":"その他","name":"ボディケア類","product":"水のいらないシャンプー","weight":130,"qty":1,"url":"","packed":false,"worn":false},
+  {"id":"seed-37","category":"その他","name":"ボディケア類","product":"アウトドアボディスプレー ハッカ","weight":130,"qty":1,"url":"","packed":false,"worn":false},
+  {"id":"seed-38","category":"ファーストエイドキット","name":"バッテリー","product":"モバイルバッテリー 10000mAh","weight":241,"qty":1,"url":"","packed":false,"worn":false},
+  {"id":"seed-39","category":"ファーストエイドキット","name":"ケーブル類","product":"A - C USBケーブル","weight":14,"qty":1,"url":"","packed":false,"worn":false},
+  {"id":"seed-40","category":"ファーストエイドキット","name":"グランドシート","product":"エマージェンシーシート","weight":29,"qty":1,"url":"","packed":false,"worn":false},
+  {"id":"seed-41","category":"ファーストエイドキット","name":"メディカルキット","product":"RESCUE BALM","weight":27,"qty":1,"url":"","packed":false,"worn":false},
+  {"id":"seed-42","category":"ファーストエイドキット","name":"メディカルキット","product":"薬&絆創膏ほか","weight":23,"qty":1,"url":"","packed":false,"worn":false},
+  {"id":"seed-43","category":"ファーストエイドキット","name":"燃料","product":"FIREDORAGON","weight":12,"qty":1,"url":"","packed":false,"worn":false},
+  {"id":"seed-44","category":"ファーストエイドキット","name":"耳栓","product":"トラベル イヤープラグス","weight":7,"qty":1,"url":"","packed":false,"worn":false},
+  {"id":"seed-45","category":"ファーストエイドキット","name":"ナイフ","product":"Folding Knife","weight":8,"qty":2,"url":"","packed":false,"worn":false},
+  {"id":"i17882725633174mpg","category":"バックパック","name":"バックパック","product":"OMM Phantom 18","weight":525,"qty":1,"url":"https://moonlight-gear.com/collections/all/products/omm-phantom-18","packed":false,"worn":false},
+  {"id":"i1788272586973oqa3","category":"バックパック","name":"バックパック","product":"Hyperlite Mountain Gear WAYPOINT 35","weight":666,"qty":1,"url":"https://moonlight-gear.com/collections/all/products/hyperlite-mountain-gear-waypoint-35","packed":false,"worn":false},
+  {"id":"i1788272649925g1rw","category":"バックパック","name":"バックパック","product":"UNUS32 FASTPACK","weight":420,"qty":1,"url":"https://sealson.co/en-jp/collections/all/products/unus32-fastpack-1","packed":false,"worn":false},
+  {"id":"i1788272722602vtbe","category":"就寝具","name":"スリーピングマット","product":"Tensor™ All-Season Regular Wide","weight":530,"qty":1,"url":"https://www.mountainwestpeak.com/items/102550547","packed":false,"worn":false},
+  {"id":"i1788272744407zxkf","category":"テント&設営道具","name":"ビビィサック","product":"Splash Bivy","weight":178,"qty":1,"url":"https://hyperlitemountaingear.com/products/splash-bivy?variant=42764474089517","packed":false,"worn":false},
+  {"id":"i17882728575568y0r","category":"就寝具","name":"シュラフ","product":"ENLIGHTENED EQUIPMENT / Revelation APEX 50°F","weight":334,"qty":1,"url":"https://moonlight-gear.com/collections/cat-sleeping/products/enlightened-equipment-revelation-apex-50-f","packed":false,"worn":false},
+  {"id":"i1788272951992pzxf","category":"就寝具","name":"シュラフ","product":"OMM Core Liner XL / OMM コアライナーXL","weight":195,"qty":1,"url":"https://moonlight-gear.com/collections/cat-sleeping/products/omm-core-liner","packed":false,"worn":false},
+  {"id":"i1788273067132h0a8","category":"衣類","name":"レインパンツ","product":"D.D Pants","weight":150,"qty":1,"url":"https://moonlightgear-equipment.com/products/d-d-pants-26ss","packed":false,"worn":false},
+  {"id":"i1788273133716og77","category":"衣類","name":"レインコート","product":"D.D Jacket","weight":225,"qty":1,"url":"https://moonlightgear-equipment.com/products/d-d-jacket-26ss?variant=44134698418212","packed":false,"worn":false},
+  {"id":"i1788273183658dmko","category":"就寝具","name":"シュラフ","product":"OMM Mountain Core 125 / OMM マウンテンコア 125","weight":380,"qty":1,"url":"https://moonlight-gear.com/collections/cat-sleeping/products/omm-mountain-core-125","packed":false,"worn":false},
+  {"id":"i178827321925994k2","category":"就寝具","name":"シュラフ","product":"OMM Mountain Raid 233 / OMM マウンテンレイド 233","weight":540,"qty":1,"url":"https://moonlight-gear.com/collections/cat-sleeping/products/omm-mountain-raid-233","packed":false,"worn":false},
+  {"id":"i17882732714760pec","category":"テント&設営道具","name":"テント","product":"X-Mid 2","weight":880,"qty":1,"url":"https://moonlight-gear.com/collections/cat-tent/products/durston-x-mid-2","packed":false,"worn":false},
+  {"id":"i17882732993283qa0","category":"テント&設営道具","name":"テント","product":"Hyperlite Mountain Gear ULTAMID 1","weight":249,"qty":1,"url":"https://moonlight-gear.com/collections/cat-tent/products/hyperlite-mountain-gear-mid-1-tarp","packed":false,"worn":false},
+  {"id":"i1788273448666nxcb","category":"テント&設営道具","name":"ペグ","product":"HODR カーボンペグ 12cm","weight":4,"qty":12,"url":"","packed":false,"worn":false},
+  {"id":"i1788273514375eyeg","category":"テント&設営道具","name":"テント","product":"Lofoten 1 ULW Tent","weight":565,"qty":1,"url":"https://japan.nordisk.eu/products/lofoten-1-ulw-tent-1-person-burnt-red?srsltid=AfmBOopIHL0RZ3ffiufmEGRQtlGr9V3feUkdo-37_6NETWA6UCa0-hm_","packed":false,"worn":false},
+  {"id":"i1788273763921c0u5","category":"テント&設営道具","name":"テント","product":"AX-79","weight":930,"qty":1,"url":"https://shop.arata-design.jp/products/arata_ax-79-ver3","packed":false,"worn":false},
+  {"id":"i1788273818342lg1h","category":"就寝具","name":"スリーピングマット","product":"OMM DuoMat / OMM デュオマット","weight":135,"qty":1,"url":"https://moonlight-gear.com/collections/cat-sleepingmat/products/omm-duomat","packed":false,"worn":false},
+  {"id":"i1788273881088ljzm","category":"衣類","name":"ウィンドシェル","product":"Gram Jacket","weight":43,"qty":1,"url":"https://moonlightgear-equipment.com/products/gram-jacket","packed":false,"worn":false},
+  {"id":"i17882739349937d9z","category":"就寝具","name":"スリーピングマット","product":"Switchback™","weight":415,"qty":1,"url":"https://nemoequipment.jp/products/switchback%E2%84%A2?variant=49433896616222","packed":false,"worn":false},
+  {"id":"i17882740042221q2a","category":"クッカー＆カトラリー","name":"クッカー","product":"VARGO Titanium Bot / バーゴ チタニウムボット","weight":147,"qty":1,"url":"https://moonlight-gear.com/collections/cat-cooker/products/vargo-titanium-bot","packed":false,"worn":false},
+  {"id":"i1788274041202fbwc","category":"クッカー＆カトラリー","name":"クッカー","product":"EVERNEW U.L. Alu Pan / エバニュー U.L アル パン","weight":117,"qty":1,"url":"https://moonlight-gear.com/collections/cat-cooker/products/evernew-u-l-alu-pan","packed":false,"worn":false},
+  {"id":"i178827410973201vt","category":"クッカー＆カトラリー","name":"クッカー","product":"EVERNEW Ti Plank B5 / エバニュー チタンプランクB5","weight":125,"qty":1,"url":"https://moonlight-gear.com/collections/cat-cooker/products/evernew-ti-plank-b5","packed":false,"worn":false},
+  {"id":"i178827416994200g2","category":"クッカー＆カトラリー","name":"カトラリー","product":"Tritensil Spoon & Folk/Knife","weight":20,"qty":1,"url":"https://moonlight-gear.com/collections/cat-cutlery/products/tritensil-spoon-folk-knife","packed":false,"worn":false},
+  {"id":"i1788274209631k5ik","category":"クッカー＆カトラリー","name":"カトラリー","product":"NODATE mug / ノダテマグ","weight":60,"qty":1,"url":"https://moonlight-gear.com/collections/cat-cutlery/products/nodate-mug","packed":false,"worn":false},
+  {"id":"i1788274262667x1o3","category":"クッカー＆カトラリー","name":"風防","product":"EVERNEW Ti9G Windshield / エバニュー チタン9G ウインドシールド","weight":9,"qty":1,"url":"https://moonlight-gear.com/collections/cat-stove/products/evernew-ti9g-windshield","packed":false,"worn":false},
+  {"id":"i1788274302854rk8q","category":"クッカー＆カトラリー","name":"ストーブ","product":"Iwatani Primus / 116フェムトストーブⅡ","weight":64,"qty":1,"url":"https://moonlight-gear.com/collections/cat-stove/products/iwatani-primus-116","packed":false,"worn":false},
+  {"id":"i1788274326905ft7s","category":"クッカー＆カトラリー","name":"ストーブ","product":"X-Boil FS 90-100 UL (47g+Bottle)","weight":28,"qty":1,"url":"https://moonlight-gear.com/collections/cat-stove/products/x-boil-fs-90-100-ul-47g-bottle","packed":false,"worn":false},
+  {"id":"i17882744399954wcd","category":"クッカー＆カトラリー","name":"クッカー","product":"トークスチタンマグ 450ml(蓋付き)","weight":62,"qty":1,"url":"https://www.mountain-products.com/products/13892","packed":false,"worn":false},
+  {"id":"i1788274505354kl9z","category":"クッカー＆カトラリー","name":"ストーブ","product":"Sanpos' Fun Lite Gear turtle stove","weight":4,"qty":1,"url":"https://moonlight-gear.com/collections/cat-stove/products/sanpos-fun-lite-gear-turtle-stove","packed":false,"worn":false},
+  {"id":"i17882745774499lp6","category":"クッカー＆カトラリー","name":"五徳","product":"TiNY Trivet | TiNY for going light powered by BASE","weight":8,"qty":1,"url":"https://shop.tinygolight.com/items/70191261","packed":false,"worn":false},
+  {"id":"i17882745970108xf0","category":"クッカー＆カトラリー","name":"その他","product":"Scoop | TiNY for going light powered by BASE","weight":2,"qty":1,"url":"https://shop.tinygolight.com/items/128691646","packed":false,"worn":false},
+  {"id":"i1788275124759ii34","category":"就寝具","name":"スリーピングマット","product":"Minimalist Pad | 山と道 ULTRALIGHT HIKING","weight":75,"qty":1,"url":"https://www.yamatomichi.com/products/minimalist-pad","packed":false,"worn":false},
+  {"id":"i17882752547046z1o","category":"食料&燃料","name":"燃料","product":"イソプロ 110｜MSR","weight":210,"qty":1,"url":"https://e-mot.co.jp/product/36927/?srsltid=AfmBOophORo_Wn0D-rO3rmtaFpOgr5Dz877156Tzh9iKBbFA9Mu6qINI","packed":false,"worn":false},
+  {"id":"i17882753548616jm3","category":"その他","name":"ヘッドライト","product":"NU25 UL","weight":80,"qty":1,"url":"https://www.nitecorelights.jp/items/86808148","packed":false,"worn":false},
+  {"id":"i1788275600416whhl","category":"テント&設営道具","name":"ペグ","product":"MSR Mini-Groundhog Stakes / エムエスアール ミニグラウンドホグステイク","weight":9,"qty":4,"url":"https://moonlight-gear.com/collections/cat-tentacc/products/msr-mini-groundhog-stakes","packed":false,"worn":false}
 ];
 
 let items = [];
@@ -462,7 +528,7 @@ function escapeHtml(str){
 }
 
 async function saveAndRender(){
-  localStorage.setItem('ul-gear-matrix', JSON.stringify(items));
+  localStorage.setItem('ul-gear-matrix-v2', JSON.stringify(items));
   render();
 }
 
@@ -611,7 +677,11 @@ $('#importFile').onchange = async (e)=>{
   try {
     const data = JSON.parse(await file.text());
     if(Array.isArray(data.items || data)){
-      items = data.items || data;
+      items = (data.items || data).map(it => ({
+        ...it,
+        worn: it.worn || false,
+        packed: it.packed !== undefined ? it.packed : false
+      }));
       saveAndRender();
       showToast('インポート完了');
     }
@@ -622,7 +692,7 @@ $('#importFile').onchange = async (e)=>{
 
 // Initial Load
 (function init(){
-  const saved = localStorage.getItem('ul-gear-matrix');
+  const saved = localStorage.getItem('ul-gear-matrix-v2');
   items = saved ? JSON.parse(saved) : SEED;
   render();
 })();
